@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="disguise-plugin-window-size" content="900,900">
+<meta name="disguise-plugin-window-min-size" content="400,600">
+<meta name="disguise-plugin-window-resizable" content="true">
+<title>disguise Cal Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0f14;--surface:#131620;--panel:#181c28;
+  --border:rgba(99,180,255,0.12);--border-bright:rgba(99,180,255,0.28);
+  --accent:#3b82f6;--accent2:#22d3ee;--green:#10b981;--red:#ef4444;
+  --text:#c8d6f0;--text-dim:#5a6a8a;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);font-size:13px;overflow:hidden}
+
+/* ── APP SWITCHER DROPDOWN ── */
+.app-switcher{position:relative;display:inline-flex}
+.app-switcher-btn{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer;color:inherit;font-family:inherit;transition:.15s;-webkit-tap-highlight-color:transparent}
+.app-switcher-btn:hover{background:rgba(99,180,255,0.07);border-color:var(--border)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:.5px;color:#e2e8f0;pointer-events:none}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.logo-dot.omnical{background:linear-gradient(135deg,#4f8ef7,#a259f7)}
+.chevron-down{transition:transform .2s;color:var(--text-dim);flex-shrink:0}
+.app-switcher-btn.open .chevron-down{transform:rotate(180deg)}
+.app-dropdown{position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1px solid var(--border-bright);border-radius:10px;min-width:210px;z-index:300;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;transform:translateY(-6px);pointer-events:none;transition:.15s}
+.app-dropdown.open{opacity:1;transform:translateY(0);pointer-events:all}
+.app-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:.12s}
+.app-opt:hover{background:rgba(99,180,255,0.08)}
+.app-opt.active{background:rgba(59,130,246,0.12)}
+.app-opt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.app-opt-info .name{font-size:13px;font-weight:600;color:#e2e8f0}
+.app-opt-info .desc{font-size:10px;color:var(--text-dim);margin-top:1px}
+.app-opt-check{margin-left:auto;color:var(--accent);font-size:14px;opacity:0}
+.app-opt.active .app-opt-check{opacity:1}
+
+/* ── SHARED ATOMS ── */
+.conn-badge{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);font-size:11px;color:var(--text-dim);cursor:pointer;background:var(--panel);transition:.15s;white-space:nowrap}
+.conn-badge:hover{border-color:var(--border-bright);color:var(--text)}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);flex-shrink:0}
+.btn-icon{padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text-dim);cursor:pointer;font-size:11px;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:5px;font-weight:500}
+.btn-icon:hover{border-color:var(--border-bright);color:var(--text);background:rgba(59,130,246,0.08)}
+.btn-icon.primary{border-color:rgba(59,130,246,0.4);color:var(--accent);background:rgba(59,130,246,0.1)}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+.coord-input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Roboto Mono',monospace;font-size:13px;padding:6px 8px;width:100%;text-align:center;outline:none;transition:.15s}
+.coord-input:focus{border-color:rgba(59,130,246,0.5);background:rgba(59,130,246,0.05)}
+.step-btn{flex:1;padding:5px 0;font-size:11px;font-weight:600;font-family:inherit;border-radius:5px;border:1px solid var(--border);background:var(--panel);color:var(--text-dim);cursor:pointer;transition:.1s;text-align:center;-webkit-tap-highlight-color:transparent}
+.step-btn.active-step{border-color:rgba(59,130,246,0.5);color:var(--accent);background:rgba(59,130,246,0.12)}
+.btn-sm{flex:1;padding:7px 4px;border-radius:6px;border:1px solid;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;text-align:center;-webkit-tap-highlight-color:transparent}
+.btn-apply{border-color:rgba(59,130,246,0.4);color:var(--accent);background:rgba(59,130,246,0.08)}
+.btn-apply:active{background:rgba(59,130,246,0.2)}
+.btn-enable{border-color:rgba(16,185,129,0.4);color:#34d399;background:rgba(16,185,129,0.07)}
+.btn-disable{border-color:rgba(239,68,68,0.35);color:#f87171;background:rgba(239,68,68,0.07)}
+.dpad-btn{display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--panel);cursor:pointer;color:var(--text-dim);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:.1s}
+.dpad-btn:active{background:rgba(59,130,246,0.25);border-color:var(--accent);color:var(--accent);transform:scale(.93)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-bg.hidden{display:none}
+.modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:14px;padding:20px;width:100%;max-width:360px;max-height:90vh;overflow-y:auto}
+.field input{width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'Roboto Mono',monospace;font-size:12px;outline:none;transition:.15s}
+.field input:focus{border-color:rgba(59,130,246,0.5)}
+.btn-modal{flex:1;padding:9px;border-radius:8px;border:1px solid;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-modal.cancel{border-color:var(--border);color:var(--text-dim);background:transparent}
+.btn-modal.cancel:hover{border-color:var(--border-bright);color:var(--text)}
+.btn-modal.ok{border-color:rgba(59,130,246,0.5);color:var(--accent);background:rgba(59,130,246,0.1)}
+.btn-modal.ok:active{background:rgba(59,130,246,0.2)}
+.session-item{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:.15s}
+.session-item:active,.session-item.selected{background:rgba(59,130,246,0.14);border-color:rgba(59,130,246,0.35)}
+#sessionList{max-height:180px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);padding:4px;margin-bottom:12px}
+
+/* projector list */
+.proj-item{border-radius:8px;border:1px solid transparent;margin-bottom:4px;overflow:hidden;transition:.15s}
+.proj-item.open{border-color:var(--border-bright);background:var(--panel)}
+.proj-summary{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;gap:8px;cursor:pointer}
+.proj-name{font-weight:600;font-size:12px;color:#dde4f0}
+.proj-meta{font-size:10px;color:var(--text-dim);font-family:'Roboto Mono',monospace;margin-top:2px}
+.proj-count{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:rgba(59,130,246,0.12);color:var(--accent);border:1px solid rgba(59,130,246,0.2)}
+.proj-arrow{transition:transform .2s;color:var(--text-dim);flex-shrink:0}
+.proj-item.open .proj-arrow{transform:rotate(90deg)}
+.proj-points{padding:0 8px 8px}
+.rp-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;cursor:pointer;transition:.15s;border:1px solid transparent;margin-bottom:3px;-webkit-tap-highlight-color:transparent}
+.rp-item:active,.rp-item.selected{background:rgba(59,130,246,0.14);border-color:rgba(59,130,246,0.35)}
+.rp-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--text-dim);flex-shrink:0}
+.rp-item.selected .rp-dot{background:var(--accent);border-color:var(--accent)}
+.rp-name{font-weight:500;font-size:12px}
+.rp-pos{font-size:10px;font-family:'Roboto Mono',monospace;color:var(--text-dim)}
+
+canvas#viz,canvas#viz-m{display:block;width:100%;height:100%}
+.canvas-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.canvas-empty{font-size:12px;color:var(--text-dim);text-align:center}
+
+.logs-bar{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface)}
+.logs-toggle{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--text-dim)}
+.logs-content{max-height:0;overflow:hidden;transition:max-height .2s}
+.logs-content.open{max-height:100px}
+.log-inner{height:90px;overflow-y:auto;padding:6px 14px;font-size:10px;font-family:'Roboto Mono',monospace;color:var(--text-dim)}
+.log-inner::-webkit-scrollbar,.projector-list::-webkit-scrollbar,#sessionList::-webkit-scrollbar{width:3px}
+.log-inner::-webkit-scrollbar-thumb,.projector-list::-webkit-scrollbar-thumb,#sessionList::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── DESKTOP QUICKCAL ── */
+#desktop-ui{display:none}
+#mobile-ui{display:none}
+@media (min-width:601px){#desktop-ui{display:grid;grid-template-rows:52px 1fr;grid-template-columns:280px 1fr;height:100vh;height:100dvh}}
+#desktop-ui .hdr{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);z-index:20}
+#desktop-ui .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s}
+#desktop-ui .sidebar.collapsed{width:0;border-right:none;overflow:hidden}
+#desktop-ui .sidebar-inner{width:280px;display:flex;flex-direction:column;height:100%;overflow:hidden}
+#desktop-ui .sidebar-hdr{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+#desktop-ui .sidebar-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text-dim);text-transform:uppercase}
+#desktop-ui .projector-list{flex:1;overflow-y:auto;padding:8px;min-height:0}
+#desktop-ui .edit-panel{border-top:1px solid var(--border);flex-shrink:0;padding:12px 14px}
+#desktop-ui .edit-panel.hidden{display:none}
+#desktop-ui .main{display:flex;flex-direction:column;overflow:hidden;position:relative}
+#desktop-ui .canvas-hdr{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;gap:8px}
+#desktop-ui .canvas-wrap{flex:1;overflow:hidden;position:relative;background:var(--bg)}
+.canvas-wrap.fullscreen{position:fixed!important;inset:0;z-index:150;background:var(--bg)}
+.fs-exit{position:fixed;top:12px;right:12px;z-index:160;padding:8px 14px;border-radius:8px;border:1px solid var(--border-bright);background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;display:none;align-items:center;gap:6px}
+.fs-exit.visible{display:flex}
+.fs-btn,.collapse-btn{padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:.15s}
+.fs-btn:hover,.collapse-btn:hover{border-color:var(--border-bright);color:var(--text)}
+#desktop-ui .dpad{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:4px}
+#desktop-ui .dpad-btn{width:40px;height:40px}
+#desktop-ui .step-row{display:flex;gap:4px}
+#desktop-ui .dpad-section{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+#desktop-ui .dpad-right{flex:1;display:flex;flex-direction:column;gap:5px}
+#desktop-ui .lineup-row{display:flex;gap:5px}
+#desktop-ui .status-line{margin-top:6px;font-size:10px;min-height:14px;color:var(--text-dim);font-family:'Roboto Mono',monospace}
+#desktop-ui .coords-row{display:flex;gap:6px;margin-bottom:10px}
+#desktop-ui .coord-box{flex:1;display:flex;flex-direction:column;gap:3px}
+#desktop-ui .coord-box label{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+#desktop-ui .edit-label{font-size:10px;font-weight:600;letter-spacing:.7px;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px}
+#desktop-ui .edit-rp-name{font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── MOBILE QUICKCAL ── */
+@media (max-width:600px){#mobile-ui{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}}
+#mobile-ui .m-hdr{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:48px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:8px}
+#mobile-ui .m-canvas-wrap{flex:1;position:relative;background:var(--bg);min-height:0}
+#mobile-ui .m-controls{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 12px;padding-bottom:calc(10px + var(--safe-b))}
+#mobile-ui .m-point-strip{display:flex;align-items:center;gap:6px;margin-bottom:10px;min-height:36px}
+#mobile-ui .m-point-scroll{display:flex;gap:6px;overflow-x:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#mobile-ui .m-point-scroll::-webkit-scrollbar{display:none}
+.m-point-chip{flex-shrink:0;padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--panel);font-size:11px;font-weight:600;color:var(--text-dim);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:.15s}
+.m-point-chip.selected{border-color:rgba(59,130,246,0.5);color:var(--accent);background:rgba(59,130,246,0.14)}
+.m-change-proj{flex-shrink:0;padding:6px 10px;border-radius:8px;border:1px solid var(--border-bright);background:var(--panel);color:var(--text-dim);font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent}
+#mobile-ui .m-coords{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+#mobile-ui .m-coord-box{display:flex;flex-direction:column;gap:3px}
+#mobile-ui .m-coord-box label{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;text-align:center}
+#mobile-ui .m-dpad-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#mobile-ui .m-dpad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:5px;flex-shrink:0}
+#mobile-ui .dpad-btn{width:48px;height:48px}
+#mobile-ui .m-dpad-right{flex:1;display:flex;flex-direction:column;gap:6px}
+#mobile-ui .m-step-row{display:flex;gap:5px}
+#mobile-ui .m-actions{display:flex;gap:5px}
+#mobile-ui .m-status{font-size:10px;min-height:14px;color:var(--text-dim);font-family:'Roboto Mono',monospace;text-align:center;margin-top:4px}
+.proj-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;flex-direction:column;justify-content:flex-end}
+.proj-sheet-bg.hidden{display:none}
+.proj-sheet{background:var(--surface);border-radius:16px 16px 0 0;border-top:1px solid var(--border-bright);max-height:80vh;display:flex;flex-direction:column;padding-bottom:var(--safe-b)}
+.proj-sheet-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;flex-shrink:0}
+.proj-sheet-title{font-size:13px;font-weight:700;color:#e2e8f0}
+.proj-sheet-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:20px;line-height:1;padding:0 4px}
+.proj-sheet-list{overflow-y:auto;padding:0 10px 16px;flex:1}
+
+/* ── OMNICAL PANEL ── */
+#omnical-panel{display:none;height:100%;overflow:hidden;flex-direction:column}
+#omnical-panel.visible{display:flex}
+.oc-wrap{flex:1;overflow-y:auto;padding:24px;background:var(--bg)}
+.oc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;width:100%;max-width:560px;margin:0 auto}
+.oc-step{display:none}
+.oc-step.active{display:block}
+.oc-step-label{font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.oc-step h2{font-size:17px;font-weight:600;color:#fff;margin-bottom:6px}
+.oc-step p.desc{font-size:13px;color:#8892a4;line-height:1.6;margin-bottom:22px}
+.oc-input-row{display:flex;gap:10px;margin-bottom:18px}
+.oc-field{flex:1}
+.oc-field label{display:block;font-size:12px;color:#8892a4;margin-bottom:6px;font-weight:500}
+.oc-field input{width:100%;background:#1e2330;border:1px solid #2e3448;border-radius:8px;padding:10px 14px;color:#e0e4ef;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.oc-field input:focus{border-color:#4f8ef7}
+.oc-field.small{flex:0 0 110px}
+.oc-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:9px;font-size:14px;font-weight:600;font-family:inherit;border:none;cursor:pointer;transition:all .18s}
+.oc-btn-primary{background:linear-gradient(135deg,#4f8ef7,#5b6ff0);color:#fff}
+.oc-btn-primary:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.oc-btn-success{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff}
+.oc-btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
+.oc-btn-ghost{background:#1e2330;color:#8892a4;border:1px solid #2e3448}
+.oc-btn-ghost:hover{background:#252a38;color:#e0e4ef}
+.oc-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+.oc-btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.oc-status{background:#1e2330;border:1px solid #2e3448;border-radius:9px;padding:12px 16px;font-size:13px;color:#8892a4;margin-bottom:18px;min-height:46px;display:flex;align-items:center;gap:10px}
+.oc-status.ok{border-color:#22c55e44;color:#4ade80;background:#0f1f15}
+.oc-status.err{border-color:#ef444444;color:#f87171;background:#1a0f0f}
+.oc-status.warn{border-color:#f59e0b44;color:#fbbf24;background:#1a160a}
+.spin{width:16px;height:16px;border:2px solid #4f8ef730;border-top-color:#4f8ef7;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.oc-progress-wrap{margin-bottom:18px}
+.oc-progress-track{background:#1e2330;border-radius:99px;height:6px;overflow:hidden;margin-top:6px}
+.oc-progress-bar{height:100%;background:linear-gradient(90deg,#4f8ef7,#a259f7);border-radius:99px;width:0%;transition:width .4s ease}
+.oc-progress-label{font-size:12px;color:#8892a4;display:flex;justify-content:space-between}
+.oc-score-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.oc-score-tile{background:#1e2330;border:1px solid #2e3448;border-radius:10px;padding:14px 12px;text-align:center}
+.oc-score-tile .val{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+.oc-score-tile .val.good{color:#4ade80}
+.oc-score-tile .val.bad{color:#f87171}
+.oc-score-tile .key{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.8px}
+.oc-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:14px}
+.oc-badge.green{background:#14532d;color:#4ade80}
+.oc-badge.red{background:#450a0a;color:#f87171}
+.oc-badge.yellow{background:#451a03;color:#fbbf24}
+.oc-sep{border:none;border-top:1px solid #252a38;margin:22px 0}
+.oc-dots{display:flex;gap:6px;margin-bottom:24px}
+.oc-dot{height:4px;border-radius:99px;background:#252a38;transition:all .3s}
+.oc-dot.done{background:#4f8ef7;width:24px}
+.oc-dot.active{background:#a259f7;width:18px}
+.oc-dot.future{width:8px}
+.oc-fallback-box{background:#0f1f15;border:1px solid #22c55e44;border-radius:10px;padding:16px 20px;margin-bottom:20px}
+.oc-fallback-box .label{font-size:11px;color:#4ade80;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.oc-fallback-box .value{font-size:14px;color:#fff;font-weight:600}
+.oc-decline-confirm{background:#1a0f0f;border:1px solid #ef444430;border-radius:10px;padding:16px 20px;margin-bottom:18px;font-size:13px;color:#f87171;display:none}
+.oc-decline-confirm.visible{display:block}
+
+/* ── omnical inside quickcal layout ── */
+#oc-in-desktop{display:none;grid-column:1/-1;overflow:hidden}
+#oc-in-desktop.visible{display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+
+<!-- ── CONNECTION MODAL ── -->
+<div class="modal-bg hidden" id="connModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:#e2e8f0">Connect to disguise</div>
+      <button onclick="discoverSessions()" style="background:none;border:none;cursor:pointer;color:var(--text-dim);display:flex;align-items:center;gap:4px;font-size:10px;font-family:inherit">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Rescan
+      </button>
+    </div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Discovered Sessions</div>
+    <div id="sessionList"><div style="padding:12px;text-align:center;color:var(--text-dim);font-size:11px">Scanning…</div></div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Manual Override</div>
+    <div style="display:grid;grid-template-columns:1fr 80px;gap:6px;margin-bottom:10px">
+      <div class="field"><input type="text" id="directorIp" placeholder="IP / Hostname"></div>
+      <div class="field"><input type="text" id="directorPort" placeholder="Port"></div>
+    </div>
+    <div id="connStatus" style="font-size:11px;color:var(--text-dim);min-height:16px;font-family:'Roboto Mono',monospace;margin-bottom:10px"></div>
+    <div style="display:flex;gap:7px">
+      <button class="btn-modal cancel" onclick="closeConn()">Cancel</button>
+      <button class="btn-modal ok" onclick="fetchProjectors()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MOBILE: PROJECTOR SHEET ── -->
+<div class="proj-sheet-bg hidden" id="projSheet">
+  <div class="proj-sheet">
+    <div class="proj-sheet-hdr">
+      <span class="proj-sheet-title">Select Projector</span>
+      <button class="proj-sheet-close" onclick="closeProjSheet()">×</button>
+    </div>
+    <div class="proj-sheet-list" id="projSheetList">
+      <div style="padding:20px;text-align:center;color:var(--text-dim);font-size:11px">No projectors loaded</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FULLSCREEN EXIT ── -->
+<button class="fs-exit" id="fsExit" onclick="exitFullscreen()">
+  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+  Exit Fullscreen
+</button>
+
+<!-- ══════════════════════════════════════════════════════
+     DESKTOP UI
+═══════════════════════════════════════════════════════ -->
+<div id="desktop-ui">
+  <header class="hdr">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="collapse-btn" id="d-collapseBtn" onclick="toggleSidebar()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <!-- App Switcher -->
+      <div class="app-switcher" id="appSwitcher">
+        <button class="app-switcher-btn" id="appSwitcherBtn" onclick="toggleAppDropdown()">
+          <div class="logo">
+            <div class="logo-dot" id="d-logoDot"></div>
+            <span id="d-appName">QUICKCAL</span>
+          </div>
+          <span style="opacity:.3;font-weight:400;margin:0 2px;font-size:13px;color:var(--text-dim)">/</span>
+          <span style="font-weight:400;font-size:12px;color:var(--text-dim)" id="d-appSub">Lineup Tool</span>
+          <svg class="chevron-down" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="app-dropdown" id="appDropdown">
+          <div class="app-opt active" id="opt-quickcal" onclick="switchApp('quickcal')">
+            <div class="app-opt-dot" style="background:var(--accent)"></div>
+            <div class="app-opt-info"><div class="name">QuickCal</div><div class="desc">Lineup Tool — projector alignment</div></div>
+            <span class="app-opt-check">✓</span>
+          </div>
+          <div class="app-opt" id="opt-omnical" onclick="switchApp('omnical')">
+            <div class="app-opt-dot" style="background:linear-gradient(135deg,#4f8ef7,#a259f7)"></div>
+            <div class="app-opt-info"><div class="name">OmniCal</div><div class="desc">Calibration Workflow</div></div>
+            <span class="app-opt-check">✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="conn-badge" onclick="openConn()"><div class="conn-dot" id="d-connDot"></div><span id="d-connLabel">Not connected</span></div>
+      <button class="btn-icon primary" onclick="openConn()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Connections
+      </button>
+    </div>
+  </header>
+
+  <!-- QuickCal sidebar -->
+  <aside class="sidebar" id="d-sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-hdr">
+        <span class="sidebar-title">Projectors</span>
+        <span id="d-projCount" style="font-size:10px;color:var(--text-dim)"></span>
+      </div>
+      <div class="projector-list" id="d-projList">
+        <div style="padding:20px 8px;text-align:center;color:var(--text-dim)">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 8px;display:block;opacity:.4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+          <span style="font-size:11px">Open Connections to load</span>
+        </div>
+      </div>
+      <div class="edit-panel hidden" id="d-editPanel">
+        <div class="edit-label">Adjust Point</div>
+        <div class="edit-rp-name" id="d-editRpName">—</div>
+        <div class="coords-row">
+          <div class="coord-box"><label>X</label><input class="coord-input" type="number" id="d-rpX" value="0" step="1"></div>
+          <div class="coord-box"><label>Y</label><input class="coord-input" type="number" id="d-rpY" value="0" step="1"></div>
+        </div>
+        <div class="dpad-section">
+          <div class="dpad">
+            <div></div><div class="dpad-btn" id="d-dUp"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg></div><div></div>
+            <div class="dpad-btn" id="d-dLeft"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></div>
+            <div class="dpad-btn" style="border:none;background:transparent;cursor:default"></div>
+            <div class="dpad-btn" id="d-dRight"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></div>
+            <div></div><div class="dpad-btn" id="d-dDown"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></div><div></div>
+          </div>
+          <div class="dpad-right">
+            <div style="font-size:10px;color:var(--text-dim);font-weight:600;letter-spacing:.5px;text-transform:uppercase">Nudge Distance</div>
+            <div class="step-row" id="d-stepBtns">
+              <button class="step-btn" data-step="1">1px</button>
+              <button class="step-btn active-step" data-step="5">5px</button>
+              <button class="step-btn" data-step="10">10px</button>
+            </div>
+            <button class="btn-sm btn-apply" id="d-applyBtn">Apply Values</button>
+          </div>
+        </div>
+        <div class="lineup-row">
+          <button class="btn-sm btn-enable" id="d-enableBtn">Enable Lineup</button>
+          <button class="btn-sm btn-disable" id="d-disableBtn">Disable Lineup</button>
+        </div>
+        <div class="status-line" id="d-status"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- QuickCal main canvas -->
+  <main class="main" id="d-qcMain">
+    <div class="canvas-hdr">
+      <span style="font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text-dim);text-transform:uppercase">Canvas</span>
+      <span style="font-size:10px;color:var(--text-dim);font-family:'Roboto Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:right" id="d-canvasInfo">No projector selected</span>
+      <button class="fs-btn" onclick="toggleFullscreen('d-canvasWrap')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+        Fullscreen
+      </button>
+    </div>
+    <div class="canvas-wrap" id="d-canvasWrap">
+      <canvas id="viz"></canvas>
+      <div class="canvas-overlay" id="d-overlay">
+        <div class="canvas-empty">
+          <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 8px;display:block;opacity:.3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Select a projector to begin
+        </div>
+      </div>
+    </div>
+    <div class="logs-bar">
+      <div class="logs-toggle" onclick="toggleLogs()">
+        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="logsArrow"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        System Log
+        <span style="margin-left:auto;font-weight:400" id="logCount">0 entries</span>
+      </div>
+      <div class="logs-content" id="logsContent"><div class="log-inner" id="logArea"></div></div>
+    </div>
+  </main>
+
+  <!-- OmniCal panel (spans full grid when active) -->
+  <div id="oc-in-desktop">
+    <div class="oc-wrap">
+      <div class="oc-card">
+        <div class="oc-dots" id="ocDots"></div>
+        <!-- Step 1 -->
+        <div class="oc-step active" id="ocStep1">
+          <div class="oc-step-label">Step 1 of 4</div>
+          <h2>Connect to Server</h2>
+          <p class="desc">Connection details are shared with QuickCal. Click <strong>Start Discovery</strong> to begin.</p>
+          <div class="oc-input-row">
+            <div class="oc-field"><label>IP Address</label><input type="text" id="ocIpInput" placeholder="192.168.1.100"></div>
+            <div class="oc-field small"><label>Port</label><input type="text" id="ocPortInput" placeholder="81"></div>
+          </div>
+          <div class="oc-status" id="ocS1status">Enter your server details above.</div>
+          <div class="oc-btn-row">
+            <button class="oc-btn oc-btn-primary" id="ocBtnConnect" onclick="ocStartDiscovery()">▶ Start Discovery</button>
+          </div>
+        </div>
+        <!-- Step 2 -->
+        <div class="oc-step" id="ocStep2">
+          <div class="oc-step-label">Step 2 of 4</div>
+          <h2>Camera Discovery</h2>
+          <p class="desc">Discovery is running. Press <strong>Capture</strong> to trigger a rig check and begin calibration.</p>
+          <div class="oc-status ok" id="ocS2status">✓ Camera discovery started successfully.</div>
+          <div class="oc-progress-wrap" id="ocProgressWrap" style="display:none">
+            <div class="oc-progress-label"><span id="ocProgText">Running rig check…</span><span id="ocProgPct">0%</span></div>
+            <div class="oc-progress-track"><div class="oc-progress-bar" id="ocProgBar"></div></div>
+          </div>
+          <div class="oc-btn-row">
+            <button class="oc-btn oc-btn-primary" id="ocBtnCapture" onclick="ocTriggerCapture()">⬡ Capture</button>
+            <button class="oc-btn oc-btn-ghost" onclick="ocGoBack(1)">← Back</button>
+          </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="oc-step" id="ocStep3">
+          <div class="oc-step-label">Step 3 of 4</div>
+          <h2>Calibration Results</h2>
+          <p class="desc">Review the scores below. Accept to save as fallback, or decline to discard.</p>
+          <div id="ocResultBadge"></div>
+          <div class="oc-score-grid" id="ocScoreGrid"></div>
+          <div id="ocS3feedback" class="oc-status" style="margin-bottom:18px"></div>
+          <div class="oc-decline-confirm" id="ocDeclineConfirm">
+            ⚠ Are you sure? The calibration will be reverted and the previous fallback restored.
+            <div class="oc-btn-row" style="margin-top:12px">
+              <button class="oc-btn oc-btn-danger" onclick="ocConfirmDecline()">Yes, Revert</button>
+              <button class="oc-btn oc-btn-ghost" onclick="ocCancelDecline()">Cancel</button>
+            </div>
+          </div>
+          <div class="oc-btn-row" id="ocResultBtns">
+            <button class="oc-btn oc-btn-success" onclick="ocAcceptCalibration()">✓ Accept & Save</button>
+            <button class="oc-btn oc-btn-danger" onclick="ocShowDeclineConfirm()">✕ Decline</button>
+          </div>
+        </div>
+        <!-- Step 4 -->
+        <div class="oc-step" id="ocStep4">
+          <div class="oc-step-label">Step 4 of 4</div>
+          <h2 id="ocDoneTitle">Calibration Saved</h2>
+          <p class="desc" id="ocDoneDesc">The calibration has been accepted and the fallback has been updated.</p>
+          <div class="oc-fallback-box" id="ocFallbackBox" style="display:none">
+            <div class="label">Fallback Saved As</div>
+            <div class="value" id="ocFallbackVal"></div>
+          </div>
+          <div class="oc-status ok" id="ocS4status"></div>
+          <hr class="oc-sep">
+          <div class="oc-btn-row" id="ocDoneBtnRow">
+            <button class="oc-btn oc-btn-primary" onclick="ocRestart()">↺ New Calibration</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MOBILE UI
+═══════════════════════════════════════════════════════ -->
+<div id="mobile-ui">
+  <div class="m-hdr">
+    <div class="app-switcher" id="mAppSwitcher">
+      <button class="app-switcher-btn" id="mAppSwitcherBtn" onclick="toggleMobileAppDropdown()" style="padding:4px 8px 4px 2px">
+        <div class="logo" style="font-size:13px"><div class="logo-dot" id="m-logoDot"></div><span id="m-appName">QUICKCAL</span></div>
+        <svg class="chevron-down" width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+      <div class="app-dropdown" id="mAppDropdown">
+        <div class="app-opt active" id="mOpt-quickcal" onclick="switchApp('quickcal')">
+          <div class="app-opt-dot" style="background:var(--accent)"></div>
+          <div class="app-opt-info"><div class="name">QuickCal</div><div class="desc">Lineup Tool</div></div>
+          <span class="app-opt-check">✓</span>
+        </div>
+        <div class="app-opt" id="mOpt-omnical" onclick="switchApp('omnical')">
+          <div class="app-opt-dot" style="background:linear-gradient(135deg,#4f8ef7,#a259f7)"></div>
+          <div class="app-opt-info"><div class="name">OmniCal</div><div class="desc">Calibration Workflow</div></div>
+          <span class="app-opt-check">✓</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div class="conn-badge" onclick="openConn()" style="padding:4px 8px"><div class="conn-dot" id="m-connDot"></div><span id="m-connLabel" style="font-size:10px">Not connected</span></div>
+      <button class="btn-icon primary" onclick="openConn()" style="padding:6px 8px">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- QuickCal canvas (mobile) -->
+  <div class="m-canvas-wrap" id="m-qcCanvas">
+    <canvas id="viz-m"></canvas>
+    <div class="canvas-overlay" id="m-overlay">
+      <div class="canvas-empty">
+        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 8px;display:block;opacity:.3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+        Connect to load projectors
+      </div>
+    </div>
+    <button onclick="toggleFullscreen('m-canvasWrap')" style="position:absolute;top:8px;right:8px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(13,15,20,.7);color:var(--text-dim);font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px">
+      <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>FS
+    </button>
+  </div>
+
+  <!-- QuickCal controls (mobile) -->
+  <div class="m-controls" id="m-qcControls">
+    <div class="m-point-strip">
+      <button class="m-change-proj" onclick="openProjSheet()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+        Projector
+      </button>
+      <div class="m-point-scroll" id="m-pointStrip">
+        <div style="font-size:11px;color:var(--text-dim);line-height:36px;white-space:nowrap">No points</div>
+      </div>
+    </div>
+    <div class="m-coords">
+      <div class="m-coord-box"><label>X</label><input class="coord-input" type="number" id="m-rpX" value="0" step="1" inputmode="numeric"></div>
+      <div class="m-coord-box"><label>Y</label><input class="coord-input" type="number" id="m-rpY" value="0" step="1" inputmode="numeric"></div>
+    </div>
+    <div class="m-dpad-row">
+      <div class="m-dpad">
+        <div></div><div class="dpad-btn" id="m-dUp"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg></div><div></div>
+        <div class="dpad-btn" id="m-dLeft"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></div>
+        <div class="dpad-btn" style="border:none;background:transparent;cursor:default"></div>
+        <div class="dpad-btn" id="m-dRight"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></div>
+        <div></div><div class="dpad-btn" id="m-dDown"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></div><div></div>
+      </div>
+      <div class="m-dpad-right">
+        <div style="font-size:10px;color:var(--text-dim);font-weight:600;letter-spacing:.5px;text-transform:uppercase">Nudge</div>
+        <div class="m-step-row" id="m-stepBtns">
+          <button class="step-btn" data-step="1">1px</button>
+          <button class="step-btn active-step" data-step="5">5px</button>
+          <button class="step-btn" data-step="10">10px</button>
+        </div>
+        <div class="m-actions">
+          <button class="btn-sm btn-enable" id="m-enableBtn" style="font-size:10px">Enable</button>
+          <button class="btn-sm btn-disable" id="m-disableBtn" style="font-size:10px">Disable</button>
+        </div>
+        <button class="btn-sm btn-apply" id="m-applyBtn" style="margin-top:4px">Apply Values</button>
+      </div>
+    </div>
+    <div class="m-status" id="m-status"></div>
+  </div>
+
+  <!-- OmniCal panel (mobile) -->
+  <div id="m-ocPanel" style="display:none;flex:1;overflow-y:auto;background:var(--bg)">
+    <div style="padding:16px">
+      <div class="oc-card" style="max-width:100%">
+        <div class="oc-dots" id="mOcDots"></div>
+        <div class="oc-step active" id="mOcStep1">
+          <div class="oc-step-label">Step 1 of 4</div>
+          <h2>Connect to Server</h2>
+          <p class="desc">Connection details shared with QuickCal. Tap Start Discovery.</p>
+          <div class="oc-input-row">
+            <div class="oc-field"><label>IP Address</label><input type="text" id="mOcIp" placeholder="192.168.1.100"></div>
+            <div class="oc-field small"><label>Port</label><input type="text" id="mOcPort" placeholder="81"></div>
+          </div>
+          <div class="oc-status" id="mOcS1">Enter server details.</div>
+          <div class="oc-btn-row"><button class="oc-btn oc-btn-primary" id="mOcBtnConnect" onclick="ocStartDiscovery()">▶ Start Discovery</button></div>
+        </div>
+        <div class="oc-step" id="mOcStep2">
+          <div class="oc-step-label">Step 2 of 4</div>
+          <h2>Camera Discovery</h2>
+          <p class="desc">Discovery running. Tap <strong>Capture</strong> to begin calibration.</p>
+          <div class="oc-status ok" id="mOcS2">✓ Camera discovery started.</div>
+          <div class="oc-progress-wrap" id="mOcProgressWrap" style="display:none">
+            <div class="oc-progress-label"><span id="mOcProgText">Running…</span><span id="mOcProgPct">0%</span></div>
+            <div class="oc-progress-track"><div class="oc-progress-bar" id="mOcProgBar"></div></div>
+          </div>
+          <div class="oc-btn-row">
+            <button class="oc-btn oc-btn-primary" id="mOcBtnCapture" onclick="ocTriggerCapture()">⬡ Capture</button>
+            <button class="oc-btn oc-btn-ghost" onclick="ocGoBack(1)">← Back</button>
+          </div>
+        </div>
+        <div class="oc-step" id="mOcStep3">
+          <div class="oc-step-label">Step 3 of 4</div>
+          <h2>Calibration Results</h2>
+          <p class="desc">Review scores, then accept or decline.</p>
+          <div id="mOcBadge"></div>
+          <div class="oc-score-grid" id="mOcScoreGrid"></div>
+          <div id="mOcS3" class="oc-status" style="margin-bottom:16px"></div>
+          <div class="oc-decline-confirm" id="mOcDeclineConfirm">
+            ⚠ Are you sure? Previous fallback will be restored.
+            <div class="oc-btn-row" style="margin-top:12px">
+              <button class="oc-btn oc-btn-danger" onclick="ocConfirmDecline()">Yes, Revert</button>
+              <button class="oc-btn oc-btn-ghost" onclick="ocCancelDecline()">Cancel</button>
+            </div>
+          </div>
+          <div class="oc-btn-row" id="mOcResultBtns">
+            <button class="oc-btn oc-btn-success" onclick="ocAcceptCalibration()">✓ Accept</button>
+            <button class="oc-btn oc-btn-danger" onclick="ocShowDeclineConfirm()">✕ Decline</button>
+          </div>
+        </div>
+        <div class="oc-step" id="mOcStep4">
+          <div class="oc-step-label">Step 4 of 4</div>
+          <h2 id="mOcDoneTitle">Calibration Saved</h2>
+          <p class="desc" id="mOcDoneDesc">Accepted and saved as new fallback.</p>
+          <div class="oc-fallback-box" id="mOcFallbackBox" style="display:none">
+            <div class="label">Fallback Saved As</div>
+            <div class="value" id="mOcFallbackVal"></div>
+          </div>
+          <div class="oc-status ok" id="mOcS4"></div>
+          <hr class="oc-sep">
+          <div class="oc-btn-row" id="mOcDoneBtnRow">
+            <button class="oc-btn oc-btn-primary" onclick="ocRestart()">↺ New Calibration</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── App State ────────────────────────────────────────────────────────────────
+const Disguise = window.Disguise||null;
+let currentApp = 'quickcal';
+let directorHostname='', directorHttpPort='';
+let projectorData=[], selectedProj=null, selectedRp=null;
+let nudgeStep=5, isApplying=false;
+let logsOpen=false, logCount=0, discoveredSessions=[];
+let sidebarCollapsed=false, fsTarget=null;
+const isMobile=()=>window.innerWidth<=600;
+
+// canvas
+let dCanvas, dCtx, mCanvas, mCtx;
+let vizProj=null;
+let dragPoint=null, dragOffX=0, dragOffY=0, hoveredPoint=null;
+
+// OmniCal state
+let ocBase='', ocPollInterval=null, ocPollCount=0, ocLastResult=null;
+
+// ─── App Switcher ─────────────────────────────────────────────────────────────
+function toggleAppDropdown(){
+  const btn=document.getElementById('appSwitcherBtn');
+  const dd=document.getElementById('appDropdown');
+  btn.classList.toggle('open'); dd.classList.toggle('open');
+}
+function toggleMobileAppDropdown(){
+  const btn=document.getElementById('mAppSwitcherBtn');
+  const dd=document.getElementById('mAppDropdown');
+  btn.classList.toggle('open'); dd.classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#appSwitcher')){document.getElementById('appSwitcherBtn')?.classList.remove('open');document.getElementById('appDropdown')?.classList.remove('open');}
+  if(!e.target.closest('#mAppSwitcher')){document.getElementById('mAppSwitcherBtn')?.classList.remove('open');document.getElementById('mAppDropdown')?.classList.remove('open');}
+});
+
+function switchApp(app){
+  currentApp=app;
+  // close dropdowns
+  document.querySelectorAll('.app-dropdown').forEach(d=>d.classList.remove('open'));
+  document.querySelectorAll('.app-switcher-btn').forEach(b=>b.classList.remove('open'));
+
+  const isQC=app==='quickcal';
+  // Desktop logo
+  document.getElementById('d-appName').textContent=isQC?'QUICKCAL':'OMNICAL';
+  document.getElementById('d-appSub').textContent=isQC?'Lineup Tool':'Calibration Workflow';
+  document.getElementById('d-logoDot').className='logo-dot'+(isQC?'':' omnical');
+  // Mobile logo
+  document.getElementById('m-appName').textContent=isQC?'QUICKCAL':'OMNICAL';
+  document.getElementById('m-logoDot').className='logo-dot'+(isQC?'':' omnical');
+  // Active options
+  ['opt-quickcal','opt-omnical','mOpt-quickcal','mOpt-omnical'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    el.classList.toggle('active',id.includes(app));
+  });
+  // Sidebar collapse button — hide in omnical (no sidebar)
+  const colBtn=document.getElementById('d-collapseBtn');
+  if(colBtn) colBtn.style.display=isQC?'':'none';
+
+  if(isMobile()){
+    document.getElementById('m-qcCanvas').style.display=isQC?'':'none';
+    document.getElementById('m-qcControls').style.display=isQC?'':'none';
+    document.getElementById('m-ocPanel').style.display=isQC?'none':'flex';
+    document.getElementById('m-ocPanel').style.flexDirection='column';
+    if(!isQC) syncOcInputsFromGlobal();
+  } else {
+    // Desktop: show/hide sidebar + main vs omnical panel
+    document.getElementById('d-sidebar').style.display=isQC?'':'none';
+    document.getElementById('d-qcMain').style.display=isQC?'':'none';
+    const ocPanel=document.getElementById('oc-in-desktop');
+    if(isQC){ocPanel.classList.remove('visible');}
+    else{ocPanel.classList.add('visible');syncOcInputsFromGlobal();}
+  }
+}
+
+function syncOcInputsFromGlobal(){
+  // prefill OmniCal inputs from shared connection
+  const ip=directorHostname||document.getElementById('directorIp')?.value||'';
+  const port=directorHttpPort||document.getElementById('directorPort')?.value||'';
+  ['ocIpInput','mOcIp'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=ip;});
+  ['ocPortInput','mOcPort'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=port;});
+}
+
+// ─── Python Scripts ───────────────────────────────────────────────────────────
+const pythonScript_Fetch = String.raw`
+import json
+pylogs_list = []
+def pylog(message): processed_message = str(message).replace('\\', '\\\\').replace('"', '\\"'); pylogs_list.append(processed_message)
+response_dict = {"projectors": [], "log": pylogs_list, "pyError": None}; projector_objects_list = []; error_occurred = False
+try:
+    if 'resourceManager' not in globals(): response_dict["pyError"] = "resourceManager not found"; error_occurred = True
+    else:
+        projector_type_to_query = None
+        if 'd3' in globals() and hasattr(d3, 'Projector'): projector_type_to_query = d3.Projector
+        elif 'Projector' in globals() and callable(globals().get('Projector')): projector_type_to_query = globals()['Projector']
+        else: projector_type_to_query = 'Projector'
+        try: projector_objects_list = resourceManager.allResources(projector_type_to_query)
+        except Exception as e_all_res: response_dict["pyError"] = str(e_all_res); error_occurred = True
+    if not error_occurred:
+        for i, proj in enumerate(projector_objects_list):
+            proj_info = {'name': 'Unknown', 'uid': 'N/A', 'path': 'N/A', 'res_w': 1920, 'res_h': 1080, 'reference_points': []}
+            try:
+                name_attr = getattr(proj, 'name', None)
+                if not name_attr or name_attr == type(proj).__name__:
+                    name_attr_usr = getattr(proj, '__username__', None)
+                    if name_attr_usr and name_attr_usr not in ['Object', 'Projector', 'Display', 'SlcAwareDisplay']: name_attr = name_attr_usr
+                if not name_attr or name_attr == type(proj).__name__:
+                    path_obj_for_name = getattr(proj, 'path', None)
+                    if path_obj_for_name and hasattr(path_obj_for_name, 'filename'): name_attr = path_obj_for_name.filename
+                proj_info['name'] = name_attr if (name_attr and name_attr != type(proj).__name__) else 'Unnamed Proj'
+                proj_info['uid'] = str(getattr(proj, 'uid', 'N/A'))
+                path_obj = getattr(proj, 'path', None)
+                proj_info['path'] = path_obj.filename if path_obj and hasattr(path_obj, 'filename') else 'N/A'
+                proj_config = getattr(proj, 'config', None)
+                if proj_config:
+                    calibrated_points_list = getattr(proj_config, '_points', [])
+                    for cp_idx, cal_point in enumerate(calibrated_points_list):
+                        ref_point_obj = getattr(cal_point, 'point', None); rp_name_to_set = 'Unnamed RP'; rp_uid_to_set = 'N/A'; current_x_val=0.0; current_y_val=0.0
+                        if ref_point_obj:
+                            rp_uid_to_set = str(getattr(ref_point_obj, 'uid', 'N/A'))
+                            name_val = getattr(ref_point_obj, 'name', None)
+                            if name_val and name_val not in ['ReferencePoint', 'Object', type(ref_point_obj).__name__]: rp_name_to_set = name_val
+                            else:
+                                username_val = getattr(ref_point_obj, '__username__', None)
+                                if username_val and username_val not in ['ReferencePoint', 'Object', type(ref_point_obj).__name__]: rp_name_to_set = username_val
+                                else:
+                                    path_val_obj = getattr(ref_point_obj, 'path', None)
+                                    if path_val_obj and hasattr(path_val_obj, 'filename'):
+                                        if path_val_obj.filename not in ['ReferencePoint', 'Object']: rp_name_to_set = path_val_obj.filename
+                            single_poses = getattr(cal_point, 'singlePosePoints', [])
+                            if single_poses:
+                                raster_pos_v2 = getattr(single_poses[0], 'rasterPos', None)
+                                if raster_pos_v2 and hasattr(raster_pos_v2, 'x') and hasattr(raster_pos_v2, 'y'):
+                                    current_x_val=float(raster_pos_v2.x); current_y_val=float(raster_pos_v2.y)
+                        proj_info['reference_points'].append({'name': rp_name_to_set, 'uid': rp_uid_to_set, 'raster_pos_str': "X:{:.1f}, Y:{:.1f}".format(current_x_val, current_y_val), 'current_x': current_x_val, 'current_y': current_y_val})
+                    res_w=0; res_h=0
+                    for wa in ['outputWidth','rasterWidth','resolutionWidth','displayWidth','width','outputResX','resX']:
+                        try:
+                            v=getattr(proj_config,wa,None) or getattr(proj,wa,None)
+                            if v and int(v)>0: res_w=int(v); break
+                        except: pass
+                    for ha in ['outputHeight','rasterHeight','resolutionHeight','displayHeight','height','outputResY','resY']:
+                        try:
+                            v=getattr(proj_config,ha,None) or getattr(proj,ha,None)
+                            if v and int(v)>0: res_h=int(v); break
+                        except: pass
+                    if res_w==0 or res_h==0:
+                        try:
+                            for ra in ['outputRes','resolution','displayRes','rasterRes','res']:
+                                ro=getattr(proj_config,ra,None) or getattr(proj,ra,None)
+                                if ro:
+                                    if hasattr(ro,'x') and hasattr(ro,'y'): res_w=int(ro.x); res_h=int(ro.y); break
+                                    if hasattr(ro,'width') and hasattr(ro,'height'): res_w=int(ro.width); res_h=int(ro.height); break
+                        except: pass
+                    proj_info['res_w']=res_w if res_w>0 else 1920
+                    proj_info['res_h']=res_h if res_h>0 else 1080
+                response_dict["projectors"].append(proj_info)
+            except Exception as e_proj_loop:
+                response_dict["projectors"].append({"name":proj_info.get('name','Err'),"uid":proj_info.get('uid','N/A'),"pyErrorLoop":str(e_proj_loop),"reference_points":[]})
+    print("FINAL_JSON_DATA_START>>>"+json.dumps(response_dict)+"<<<FINAL_JSON_DATA_END")
+except Exception as e_outer:
+    print("FINAL_JSON_DATA_START>>>"+json.dumps({"projectors":[],"log":pylogs_list,"pyError":"CRITICAL: {}".format(str(e_outer))})+"<<<FINAL_JSON_DATA_END")
+`.trim();
+
+function getPythonScript_SetLineupMode(projPath,enableBool){
+  const p=String(projPath).replace(/"/g,'\\"'),b=enableBool?'True':'False';
+  return `import json\npylogs_list=[]\ndef pylog(m): pylogs_list.append(str(m))\nr={"success":False,"message":"","log":pylogs_list,"pyError":None}\ntry:\n  if 'resourceManager' not in globals(): raise Exception("resourceManager not found")\n  if 'd3' not in globals() or not hasattr(d3.state,'activeEditorMan'): raise Exception("d3.state.activeEditorMan not found")\n  if 'Projector' not in globals(): raise Exception("Projector type not found")\n  proj=resourceManager.loadOrCreate("objects/projector/${p}.apx",Projector)\n  d3.state.activeEditorMan.sendActiveGuiEditor(proj.config,${b})\n  r["success"]=True; r["message"]="Lineup mode set to ${b}"\nexcept Exception as e:\n  r["pyError"]=str(e); r["message"]=str(e)\nprint("FINAL_JSON_DATA_START>>>"+json.dumps(r)+"<<<FINAL_JSON_DATA_END")`;
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+function log(msg,type='INFO'){
+  const el=document.createElement('div');
+  el.style.color=type==='ERROR'?'#f87171':type==='WARN'?'#fbbf24':'#60a5fa';
+  el.textContent=`[${new Date().toLocaleTimeString('en-GB',{hour12:false})}] ${msg}`;
+  const la=document.getElementById('logArea');if(la){la.appendChild(el);la.scrollTop=la.scrollHeight;}
+  document.getElementById('logCount').textContent=`${++logCount} entries`;
+}
+function setStatus(msg,type=''){
+  const c=type==='ok'?'#34d399':type==='err'?'#f87171':type==='busy'?'#fbbf24':'var(--text-dim)';
+  ['d-status','m-status'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=c;}});
+}
+async function execPython(script){
+  const url=`http://${directorHostname}:${directorHttpPort}/api/session/python/execute`;
+  let res;
+  if(Disguise?.Workspace?.post) res=await Disguise.Workspace.post(url,{script});
+  else{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({script})});if(!r.ok){const t=await r.text();throw new Error(`HTTP ${r.status}: ${t}`);}res=await r.json();}
+  if(res.error) throw new Error(`API error: ${JSON.stringify(res.error)}`);
+  const lc=res.d3Log||res.pythonLog||'';
+  if(!lc&&res.result) return JSON.parse(res.result);
+  const s='FINAL_JSON_DATA_START>>>',e='<<<FINAL_JSON_DATA_END';
+  const si=lc.indexOf(s),ei=lc.indexOf(e);
+  if(si===-1||ei===-1) throw new Error('Markers not found');
+  const data=JSON.parse(lc.substring(si+s.length,ei));
+  if(data.log) data.log.forEach(l=>log(`[PY] ${l}`));
+  if(data.pyError) throw new Error(`Python: ${data.pyError}`);
+  return data;
+}
+
+// ─── Discovery ────────────────────────────────────────────────────────────────
+async function checkHealth(hostname,port){
+  try{const r=await fetch(`http://${hostname}:${port}/api/session/status/health`,{signal:AbortSignal.timeout(2000)});if(!r.ok)return null;const data=await r.json();return(data.result||[]).map(res=>({machineName:res.machine?.name||hostname,ipAddress:hostname,httpPort:port,averageFPS:res.status?.averageFPS||0,states:res.status?.states||[]}));}catch{return null;}
+}
+async function discoverSessions(){
+  const st=document.getElementById('connStatus'),list=document.getElementById('sessionList');
+  discoveredSessions=[];
+  st.style.color='#fbbf24';st.textContent='Scanning…';
+  list.innerHTML=`<div style="padding:12px;text-align:center;color:var(--text-dim);font-size:11px">Scanning…</div>`;
+  const D3_PORTS=[80,81,8080,50503];
+  const localIP=document.getElementById('directorIp').value.trim();
+  const mp=parseInt(document.getElementById('directorPort').value.trim());
+  const ports=mp&&!D3_PORTS.includes(mp)?[...D3_PORTS,mp]:D3_PORTS;
+  const cands=[];
+  ports.forEach(p=>cands.push({hostname:'127.0.0.1',port:p}));
+  const m=localIP.match(/^(\d+\.\d+\.\d+)\.\d+$/);
+  if(m) for(let i=1;i<=254;i++) ports.forEach(p=>cands.push({hostname:`${m[1]}.${i}`,port:p}));
+  ports.forEach(p=>{if(localIP&&!localIP.match(/^(127\.0\.0\.1|localhost)$/)&&!cands.find(c=>c.hostname===localIP&&c.port===p))cands.push({hostname:localIP,port:p});});
+  for(let i=0;i<cands.length;i+=20){
+    const res=await Promise.all(cands.slice(i,i+20).map(c=>checkHealth(c.hostname,c.port)));
+    res.forEach(r=>{if(!r)return;r.forEach(s=>{if(!discoveredSessions.find(x=>x.machineName===s.machineName)){discoveredSessions.push(s);log(`Found: ${s.machineName} at ${s.ipAddress}:${s.httpPort}`);renderSessionList();}});});
+  }
+  if(!discoveredSessions.length){st.style.color='#fbbf24';st.textContent='No sessions found.';list.innerHTML=`<div style="padding:10px;font-size:11px;color:var(--text-dim)">No directors responded.</div>`;}
+  else{st.style.color='#34d399';st.textContent=`Found ${discoveredSessions.length} session(s)`;}
+}
+function renderSessionList(){
+  document.getElementById('sessionList').innerHTML=discoveredSessions.map((s,i)=>`
+    <div class="session-item" onclick="selectSession(${i})" id="sess_${i}">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--green)"></div>
+        <div style="min-width:0">
+          <div style="font-weight:600;font-size:12px;color:#dde4f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.machineName}</div>
+          <div style="font-size:10px;font-family:'Roboto Mono',monospace;color:var(--text-dim)">${s.ipAddress}:${s.httpPort} · ${parseFloat(s.averageFPS).toFixed(1)} FPS</div>
+        </div>
+      </div>
+      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-dim);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+    </div>`).join('');
+}
+function selectSession(i){
+  const s=discoveredSessions[i];
+  document.querySelectorAll('.session-item').forEach(el=>el.classList.remove('selected'));
+  document.getElementById(`sess_${i}`)?.classList.add('selected');
+  document.getElementById('directorIp').value=s.ipAddress;
+  document.getElementById('directorPort').value=String(s.httpPort);
+}
+
+// ─── Connection ───────────────────────────────────────────────────────────────
+function openConn(){document.getElementById('connModal').classList.remove('hidden');discoverSessions();}
+function closeConn(){document.getElementById('connModal').classList.add('hidden');}
+async function fetchProjectors(){
+  const ip=document.getElementById('directorIp').value.trim(),port=document.getElementById('directorPort').value.trim();
+  if(ip.includes(':')){ const p=ip.split(':');directorHostname=p[0];directorHttpPort=p[1];}else{directorHostname=ip;directorHttpPort=port;}
+  const st=document.getElementById('connStatus');
+  st.style.color='#fbbf24';st.textContent='Connecting…';
+  try{
+    const data=await execPython(pythonScript_Fetch);
+    projectorData=data.projectors||[];
+    renderDesktopSidebar();renderMobileProjSheet();
+    st.style.color='#34d399';st.textContent=`Found ${projectorData.length} projector(s)`;
+    ['d-connDot','m-connDot'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.background='var(--green)';});
+    ['d-connLabel','m-connLabel'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=directorHostname;});
+    log(`Fetched ${projectorData.length} projectors`);
+    closeConn();
+    syncOcInputsFromGlobal();
+  }catch(err){st.style.color='#f87171';st.textContent=`Error: ${err.message}`;log(`Fetch error: ${err.message}`,'ERROR');}
+}
+
+// ─── Desktop sidebar ──────────────────────────────────────────────────────────
+function toggleSidebar(){sidebarCollapsed=!sidebarCollapsed;document.getElementById('d-sidebar').classList.toggle('collapsed',sidebarCollapsed);}
+function renderDesktopSidebar(){
+  const list=document.getElementById('d-projList');list.innerHTML='';
+  document.getElementById('d-projCount').textContent=`${projectorData.length} found`;
+  if(!projectorData.length){list.innerHTML='<div style="padding:20px 8px;text-align:center;color:var(--text-dim);font-size:11px">No projectors found</div>';return;}
+  projectorData.forEach((proj,pi)=>{
+    const item=document.createElement('div');item.className='proj-item';
+    item.innerHTML=`
+      <div class="proj-summary" onclick="dToggleProj(${pi})">
+        <div style="min-width:0"><div class="proj-name">${proj.name||'Unnamed'}</div><div class="proj-meta">${proj.res_w||1920}×${proj.res_h||1080} · UID: ${(proj.uid||'N/A').substring(0,10)}…</div></div>
+        <div style="display:flex;align-items:center;gap:6px"><span class="proj-count">${(proj.reference_points||[]).length} pts</span><svg class="proj-arrow" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></div>
+      </div>
+      <div class="proj-points" style="display:none" id="d-pts-${pi}">
+        ${(proj.reference_points||[]).map((rp,ri)=>`
+          <div class="rp-item" onclick="selectRp(${pi},${ri},'d')" id="d-rp-${pi}-${ri}">
+            <div class="rp-dot"></div>
+            <div style="flex:1;min-width:0;margin:0 8px"><div class="rp-name">${rp.name||'Unnamed'}</div></div>
+            <div class="rp-pos">X:${(rp.current_x||0).toFixed(0)}, Y:${(rp.current_y||0).toFixed(0)}</div>
+          </div>`).join('')}
+      </div>`;
+    list.appendChild(item);
+  });
+}
+function dToggleProj(pi){
+  const items=document.querySelectorAll('#d-projList .proj-item');
+  const isOpen=items[pi]?.classList.contains('open');
+  items.forEach((el,i)=>{el.classList.remove('open');const p=document.getElementById(`d-pts-${i}`);if(p)p.style.display='none';});
+  if(!isOpen&&items[pi]){items[pi].classList.add('open');const p=document.getElementById(`d-pts-${pi}`);if(p)p.style.display='block';vizProj=projectorData[pi];showCanvas();}
+}
+
+// ─── Mobile projector sheet ───────────────────────────────────────────────────
+function openProjSheet(){document.getElementById('projSheet').classList.remove('hidden');}
+function closeProjSheet(){document.getElementById('projSheet').classList.add('hidden');}
+function renderMobileProjSheet(){
+  const list=document.getElementById('projSheetList');list.innerHTML='';
+  if(!projectorData.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:11px">No projectors loaded</div>';return;}
+  projectorData.forEach((proj,pi)=>{
+    const isActive=vizProj===projectorData[pi];
+    const item=document.createElement('div');
+    item.style.cssText='border-radius:8px;border:1px solid '+(isActive?'rgba(59,130,246,0.4)':'transparent')+';margin-bottom:6px;background:'+(isActive?'rgba(59,130,246,0.1)':'transparent')+';cursor:pointer;-webkit-tap-highlight-color:transparent;transition:.15s';
+    item.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:10px" onclick="selectMobileProj(${pi})"><div style="min-width:0"><div style="font-weight:600;font-size:13px;color:#dde4f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${proj.name||'Unnamed'}</div><div style="font-size:10px;color:var(--text-dim);font-family:'Roboto Mono',monospace;margin-top:2px">${proj.res_w||1920}×${proj.res_h||1080} · ${(proj.reference_points||[]).length} points</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${isActive?'<div style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></div>':''}<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-dim)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></div></div>`;
+    list.appendChild(item);
+  });
+}
+function selectMobileProj(pi){
+  vizProj=projectorData[pi];
+  const pts=vizProj.reference_points||[];
+  const alreadyInProj=selectedRp&&pts.find(p=>p.uid===selectedRp.uid);
+  if(pts.length&&!alreadyInProj) selectRp(pi,0,'m');
+  else{ renderMobilePointStrip(pi);showCanvas(); }
+  closeProjSheet();
+}
+
+// ─── RP selection ─────────────────────────────────────────────────────────────
+function selectRp(pi,ri,src){
+  selectedProj=projectorData[pi];
+  selectedRp={...projectorData[pi].reference_points[ri],projUid:projectorData[pi].uid,projName:projectorData[pi].name,projPath:projectorData[pi].path};
+  if(vizProj!==selectedProj){vizProj=selectedProj;showCanvas();}
+  document.querySelectorAll('#d-projList .rp-item').forEach(el=>el.classList.remove('selected'));
+  document.getElementById(`d-rp-${pi}-${ri}`)?.classList.add('selected');
+  document.getElementById('d-editRpName').textContent=selectedRp.name||'Unnamed';
+  document.getElementById('d-rpX').value=(selectedRp.current_x||0).toFixed(0);
+  document.getElementById('d-rpY').value=(selectedRp.current_y||0).toFixed(0);
+  document.getElementById('d-editPanel').classList.remove('hidden');
+  document.getElementById('d-canvasInfo').textContent=`${vizProj.name}  ·  ${vizProj.res_w||1920}×${vizProj.res_h||1080}  ·  ${(vizProj.reference_points||[]).length} pts`;
+  document.getElementById('m-rpX').value=(selectedRp.current_x||0).toFixed(0);
+  document.getElementById('m-rpY').value=(selectedRp.current_y||0).toFixed(0);
+  renderMobilePointStrip(pi);
+  document.querySelectorAll('.m-point-chip').forEach(el=>el.classList.toggle('selected',el.dataset.ri==ri));
+  setStatus('');drawCanvas();
+  if(src==='m') closeProjSheet();
+}
+function renderMobilePointStrip(pi){
+  const strip=document.getElementById('m-pointStrip');const proj=projectorData[pi];
+  if(!proj){strip.innerHTML='<div style="font-size:11px;color:var(--text-dim);line-height:36px;white-space:nowrap">No points</div>';return;}
+  strip.innerHTML=(proj.reference_points||[]).map((rp,ri)=>`<div class="m-point-chip ${selectedRp&&selectedRp.uid===rp.uid?'selected':''}" data-ri="${ri}" onclick="selectRp(${pi},${ri},'m-strip')">${rp.name||'Unnamed'}</div>`).join('');
+}
+
+// ─── Apply / Nudge ────────────────────────────────────────────────────────────
+async function applyModification(x,y){
+  if(!selectedRp||isApplying)return;
+  isApplying=true;setStatus('Sending…','busy');
+  try{
+    const r=await fetch(`http://${directorHostname}:${directorHttpPort}/api/session/quickcal/lineupcurrentpose`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projector:{uid:selectedRp.projUid,name:selectedRp.projName},referencePoint:{uid:selectedRp.uid,name:selectedRp.name},position:{x,y}})});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    selectedRp.current_x=x;selectedRp.current_y=y;
+    if(selectedProj){const rp=selectedProj.reference_points.find(r=>r.uid===selectedRp.uid);if(rp){rp.current_x=x;rp.current_y=y;}}
+    ['d-rpX','m-rpX'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=x.toFixed(0);});
+    ['d-rpY','m-rpY'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=y.toFixed(0);});
+    document.querySelectorAll('.rp-item.selected').forEach(el=>{const p=el.querySelector('.rp-pos');if(p)p.textContent=`X:${x.toFixed(0)}, Y:${y.toFixed(0)}`;});
+    setStatus(`X:${x.toFixed(0)}, Y:${y.toFixed(0)}`,'ok');drawCanvas();
+  }catch(e){log(`Apply error: ${e.message}`,'ERROR');setStatus(`Error: ${e.message}`,'err');}
+  finally{isApplying=false;}
+}
+function getXY(prefix){return{x:parseFloat(document.getElementById(`${prefix}-rpX`)?.value)||0,y:parseFloat(document.getElementById(`${prefix}-rpY`)?.value)||0};}
+function nudge(axis,dir){
+  if(!selectedRp||isApplying)return;
+  const prefix=isMobile()?'m':'d';
+  const {x,y}=getXY(prefix);
+  applyModification(axis==='x'?x+dir*nudgeStep:x,axis==='y'?y+dir*nudgeStep:y);
+}
+async function setLineupMode(enable){
+  if(!selectedRp||isApplying)return;
+  if(!selectedRp.projPath||selectedRp.projPath==='N/A'){setStatus('Path not available','err');return;}
+  isApplying=true;setStatus(enable?'Enabling…':'Disabling…','busy');
+  try{const data=await execPython(getPythonScript_SetLineupMode(selectedRp.projPath,enable));setStatus(data.message||(enable?'Enabled':'Disabled'),'ok');}
+  catch(e){log(`Lineup error: ${e.message}`,'ERROR');setStatus(`Error: ${e.message}`,'err');}
+  finally{isApplying=false;}
+}
+
+// ─── Canvas ───────────────────────────────────────────────────────────────────
+function showCanvas(){
+  const ov_d=document.getElementById('d-overlay'),ov_m=document.getElementById('m-overlay');
+  if(ov_d) ov_d.style.display=vizProj?'none':'flex';
+  if(ov_m) ov_m.style.display=vizProj?'none':'flex';
+  recalcLayout(dCanvas,dCtx);recalcLayout(mCanvas,mCtx);drawCanvas();
+}
+function recalcLayout(cvs,c){
+  if(!cvs||!vizProj) return;
+  const W=cvs.offsetWidth,H=cvs.offsetHeight;
+  if(!W||!H) return;
+  cvs.width=W*devicePixelRatio;cvs.height=H*devicePixelRatio;
+  c.scale(devicePixelRatio,devicePixelRatio);
+  const maxX=vizProj.res_w||1920,maxY=vizProj.res_h||1080,pad=30;
+  const sc=Math.min((W-pad*2)/maxX,(H-pad*2)/maxY);
+  const fw=maxX*sc,fh=maxY*sc;
+  cvs._pad={l:(W-fw)/2,t:(H-fh)/2,w:fw,h:fh,maxX,maxY,scale:sc};
+}
+function p2c(cvs,px,py){const p=cvs._pad||{l:0,t:0,scale:1};return{x:p.l+px*p.scale,y:p.t+py*p.scale};}
+function c2p(cvs,cx,cy){const p=cvs._pad||{l:0,t:0,scale:1};return{x:(cx-p.l)/p.scale,y:(cy-p.t)/p.scale};}
+function drawOn(cvs,c){
+  if(!cvs||!c||!vizProj) return;
+  const p=cvs._pad;if(!p) return;
+  const W=cvs.offsetWidth,H=cvs.offsetHeight;
+  c.clearRect(0,0,W,H);
+  c.save();c.strokeStyle='rgba(99,180,255,0.06)';c.lineWidth=0.5;
+  for(let i=0;i<=8;i++){const gx=p.l+(p.w/8)*i,gy=p.t+(p.h/8)*i;c.beginPath();c.moveTo(gx,p.t);c.lineTo(gx,p.t+p.h);c.stroke();c.beginPath();c.moveTo(p.l,gy);c.lineTo(p.l+p.w,gy);c.stroke();}
+  c.restore();
+  c.save();c.strokeStyle='rgba(99,180,255,0.22)';c.lineWidth=1;c.setLineDash([4,4]);c.strokeRect(p.l,p.t,p.w,p.h);c.restore();
+  c.save();c.fillStyle='rgba(99,180,255,0.3)';c.font='8px "Roboto Mono",monospace';
+  c.textAlign='left';c.textBaseline='top';c.fillText('0,0',p.l+3,p.t+3);c.textAlign='right';c.fillText(`${p.maxX-1},0`,p.l+p.w-3,p.t+3);c.textAlign='left';c.textBaseline='bottom';c.fillText(`0,${p.maxY-1}`,p.l+3,p.t+p.h-3);c.textAlign='right';c.fillText(`${p.maxX-1},${p.maxY-1}`,p.l+p.w-3,p.t+p.h-3);c.restore();
+  const pts=vizProj.reference_points||[];
+  if(pts.length>1){c.save();c.strokeStyle='rgba(59,130,246,0.1)';c.lineWidth=0.5;for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const a=p2c(cvs,pts[i].current_x,pts[i].current_y),b=p2c(cvs,pts[j].current_x,pts[j].current_y);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();}c.restore();}
+  pts.forEach(rp=>{
+    const {x,y}=p2c(cvs,rp.current_x,rp.current_y);
+    const isSel=selectedRp?.uid===rp.uid,isHov=hoveredPoint?.uid===rp.uid,isDrag=dragPoint?.uid===rp.uid;
+    const R=isSel?8:6;
+    if(isSel||isDrag){c.beginPath();c.arc(x,y,R+5,0,Math.PI*2);c.strokeStyle='rgba(59,130,246,0.3)';c.lineWidth=1;c.stroke();}
+    c.beginPath();c.arc(x,y,R,0,Math.PI*2);c.fillStyle=isSel||isDrag?'#3b82f6':isHov?'#22d3ee':'#1e3a5f';c.fill();c.strokeStyle=isSel?'#60a5fa':isHov?'#67e8f9':'rgba(99,180,255,0.4)';c.lineWidth=1.5;c.stroke();
+    c.beginPath();c.arc(x,y,2,0,Math.PI*2);c.fillStyle=isSel||isDrag?'#fff':'rgba(99,180,255,0.6)';c.fill();
+    c.font=`${isSel?'600':'400'} 10px "Inter",sans-serif`;c.fillStyle=isSel?'#93c5fd':'rgba(99,180,255,0.55)';c.textAlign='left';c.textBaseline='bottom';c.fillText(rp.name,x+R+5,y-R);
+    c.font='9px "Roboto Mono",monospace';c.fillStyle='rgba(99,180,255,0.35)';c.fillText(`${rp.current_x.toFixed(0)},${rp.current_y.toFixed(0)}`,x+R+5,y-R+11);
+  });
+}
+function drawCanvas(){drawOn(dCanvas,dCtx);drawOn(mCanvas,mCtx);}
+function hitTest(cvs,ex,ey){
+  if(!vizProj) return null;
+  const hitR=cvs===mCanvas?22:14;
+  const pts=vizProj.reference_points||[];
+  for(let i=pts.length-1;i>=0;i--){const {x,y}=p2c(cvs,pts[i].current_x,pts[i].current_y);if(Math.hypot(ex-x,ey-y)<hitR)return pts[i];}
+  return null;
+}
+function evPos(cvs,e){const r=cvs.getBoundingClientRect(),src=e.touches?e.touches[0]:e;return{x:src.clientX-r.left,y:src.clientY-r.top};}
+function bindCanvas(cvs){
+  if(!cvs) return;
+  const onStart=(x,y)=>{
+    const pt=hitTest(cvs,x,y);
+    if(pt){dragPoint=pt;const cp=p2c(cvs,pt.current_x,pt.current_y);dragOffX=x-cp.x;dragOffY=y-cp.y;
+      if(vizProj){const pi=projectorData.indexOf(vizProj),ri=vizProj.reference_points.indexOf(pt);if(pi>=0&&ri>=0)selectRp(pi,ri,cvs===mCanvas?'m':'d');}
+      cvs.style.cursor='grabbing';}
+  };
+  let lastSentX=null,lastSentY=null,lastSendTime=0;const THROTTLE=80;
+  const sendLive=(x,y)=>{const now=Date.now();if(lastSentX===x&&lastSentY===y)return;if(now-lastSendTime<THROTTLE)return;lastSentX=x;lastSentY=y;lastSendTime=now;applyModification(x,y);};
+  const onMove=(x,y)=>{
+    if(dragPoint){
+      const pr=cvs._pad;const p=c2p(cvs,x-dragOffX,y-dragOffY);
+      dragPoint.current_x=Math.max(0,Math.min((pr?.maxX||1920)-1,Math.round(p.x)));
+      dragPoint.current_y=Math.max(0,Math.min((pr?.maxY||1080)-1,Math.round(p.y)));
+      if(selectedRp?.uid===dragPoint.uid){
+        selectedRp.current_x=dragPoint.current_x;selectedRp.current_y=dragPoint.current_y;
+        ['d-rpX','m-rpX'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=dragPoint.current_x;});
+        ['d-rpY','m-rpY'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=dragPoint.current_y;});
+        sendLive(dragPoint.current_x,dragPoint.current_y);
+      }
+      cvs.style.cursor='grabbing';drawCanvas();
+    }else{hoveredPoint=hitTest(cvs,x,y);cvs.style.cursor=hoveredPoint?'grab':'default';drawCanvas();}
+  };
+  const onEnd=()=>{if(dragPoint)applyModification(dragPoint.current_x,dragPoint.current_y);dragPoint=null;lastSentX=null;lastSentY=null;cvs.style.cursor='default';};
+  cvs.addEventListener('mousedown',e=>{const {x,y}=evPos(cvs,e);onStart(x,y);});
+  cvs.addEventListener('mousemove',e=>{const {x,y}=evPos(cvs,e);onMove(x,y);});
+  cvs.addEventListener('mouseup',onEnd);
+  cvs.addEventListener('mouseleave',()=>{if(dragPoint){applyModification(dragPoint.current_x,dragPoint.current_y);dragPoint=null;}hoveredPoint=null;cvs.style.cursor='default';drawCanvas();});
+  cvs.addEventListener('touchstart',e=>{e.preventDefault();const {x,y}=evPos(cvs,e);onStart(x,y);},{passive:false});
+  cvs.addEventListener('touchmove',e=>{e.preventDefault();const {x,y}=evPos(cvs,e);onMove(x,y);},{passive:false});
+  cvs.addEventListener('touchend',e=>{e.preventDefault();onEnd();},{passive:false});
+}
+
+// ─── Fullscreen ───────────────────────────────────────────────────────────────
+let isFS=false;
+function toggleFullscreen(wrapId){isFS=!isFS;fsTarget=document.getElementById(wrapId||'d-canvasWrap');fsTarget?.classList.toggle('fullscreen',isFS);document.getElementById('fsExit').classList.toggle('visible',isFS);setTimeout(()=>{recalcLayout(dCanvas,dCtx);recalcLayout(mCanvas,mCtx);drawCanvas();},60);}
+function exitFullscreen(){isFS=false;fsTarget?.classList.remove('fullscreen');document.getElementById('fsExit').classList.remove('visible');setTimeout(()=>{recalcLayout(dCanvas,dCtx);recalcLayout(mCanvas,mCtx);drawCanvas();},60);}
+
+// ─── Logs ─────────────────────────────────────────────────────────────────────
+function toggleLogs(){logsOpen=!logsOpen;document.getElementById('logsContent').classList.toggle('open',logsOpen);document.getElementById('logsArrow').style.transform=logsOpen?'rotate(90deg)':'';}
+
+// ─── OmniCal Logic ────────────────────────────────────────────────────────────
+function ocGetBase(){
+  const ip=(document.getElementById('ocIpInput')||document.getElementById('mOcIp'))?.value?.trim()||directorHostname;
+  const port=(document.getElementById('ocPortInput')||document.getElementById('mOcPort'))?.value?.trim()||directorHttpPort;
+  return `http://${ip}:${port}`;
+}
+function ocSetStatus(ids,msg,type=''){
+  ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.className='oc-status'+(type?' '+type:'');el.innerHTML=msg;});
+}
+function ocShowStep(n){
+  const total=4;
+  // desktop
+  for(let i=1;i<=total;i++){document.getElementById('ocStep'+i)?.classList.toggle('active',i===n);document.getElementById('mOcStep'+i)?.classList.toggle('active',i===n);}
+  ocRenderDots(n);
+}
+function ocRenderDots(cur){
+  const total=4;
+  ['ocDots','mOcDots'].forEach(id=>{
+    const c=document.getElementById(id);if(!c)return;c.innerHTML='';
+    for(let i=1;i<=total;i++){const d=document.createElement('div');d.className='oc-dot '+(i<cur?'done':i===cur?'active':'future');c.appendChild(d);}
+  });
+}
+function ocGoBack(n){ocShowStep(n);}
+async function ocApiCall(path,body=null){
+  const base=ocGetBase();
+  const opts={method:body!==null?'POST':'GET',headers:{'Content-Type':'application/json'}};
+  if(body!==null) opts.body=JSON.stringify(body);
+  const res=await fetch(base+path,opts);return res.json();
+}
+async function ocStartDiscovery(){
+  // sync inputs
+  const ipEl=document.getElementById('ocIpInput')||document.getElementById('mOcIp');
+  const portEl=document.getElementById('ocPortInput')||document.getElementById('mOcPort');
+  const ip=ipEl?.value?.trim()||'';const port=portEl?.value?.trim()||'';
+  if(ip){directorHostname=ip;directorHttpPort=port;}
+
+  ['ocBtnConnect','mOcBtnConnect'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=true;el.innerHTML='<span class="spin"></span> Connecting…';}});
+  ocSetStatus(['ocS1status','mOcS1'],'<span class="spin"></span> Starting camera discovery…');
+  try{
+    const data=await ocApiCall('/api/session/omnical/cameradiscovery',{enabled:true});
+    if(data.status&&data.status.code===0){
+      ocSetStatus(['ocS1status','mOcS1'],'✓ '+(data.status.message||'Discovery started.'),'ok');
+      setTimeout(()=>ocShowStep(2),800);
+    }else throw new Error(data.status?.message||'Unknown error');
+  }catch(e){ocSetStatus(['ocS1status','mOcS1'],'✕ '+e.message,'err');}
+  ['ocBtnConnect','mOcBtnConnect'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=false;el.innerHTML='▶ Start Discovery';}});
+}
+async function ocTriggerCapture(){
+  ['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=true;el.innerHTML='<span class="spin"></span> Running…';}});
+  ['ocProgressWrap','mOcProgressWrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});
+  ocSetStatus(['ocS2status','mOcS2'],'<span class="spin"></span> Triggering rig check…','warn');
+  ocSetProgress(5,'Triggering rig check…');
+  try{
+    await ocApiCall('/api/session/omnical/rigcheck/executeplan',{});
+    ocSetStatus(['ocS2status','mOcS2'],'<span class="spin"></span> Calibration in progress…','warn');
+    ocSetProgress(20,'Rig check running…');
+    ocPollCount=0;ocPollInterval=setInterval(ocPollResult,2000);
+  }catch(e){
+    ocSetStatus(['ocS2status','mOcS2'],'✕ '+e.message,'err');
+    ['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=false;el.innerHTML='⬡ Capture';}});
+  }
+}
+function ocSetProgress(pct,label){
+  ['ocProgBar','mOcProgBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=pct+'%';});
+  ['ocProgPct','mOcProgPct'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=pct+'%';});
+  ['ocProgText','mOcProgText'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=label;});
+}
+async function ocPollResult(){
+  ocPollCount++;const pct=Math.min(20+ocPollCount*3,90);ocSetProgress(pct,'Calibrating…');
+  try{
+    const data=await ocApiCall('/api/session/omnical/rigcheck/checkresult');
+    const msg=data.status?.message||'';
+    const isDone=msg.includes('No OmniCal Tasks in progress');
+    if(isDone){clearInterval(ocPollInterval);ocLastResult=data.result;ocSetProgress(100,'Complete!');setTimeout(()=>ocShowResults(data),600);return;}
+    if(ocPollCount>=120){clearInterval(ocPollInterval);ocSetStatus(['ocS2status','mOcS2'],'✕ Timed out.','err');['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=false;el.innerHTML='⬡ Capture';}});}
+  }catch(e){clearInterval(ocPollInterval);ocSetStatus(['ocS2status','mOcS2'],'✕ '+e.message,'err');['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=false;el.innerHTML='⬡ Capture';}});}
+}
+function ocShowResults(data){
+  const r=data.result;
+  const sc=r.status==='Green'?'green':r.status==='Yellow'?'yellow':'red';
+  const badge=`<span class="oc-badge ${sc}">${r.status} — ${r.feedback||''}</span>`;
+  ['ocResultBadge','mOcBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=badge;});
+  function fmtScore(v){return(v===10000||v===undefined)?'—':parseFloat(v).toFixed(4);}
+  function sClass(v){if(v===10000||v===undefined)return'';return v<1?'good':v<3?'':'bad';}
+  const grid=`<div class="oc-score-tile"><div class="val ${sClass(r.omniCalScore)}">${fmtScore(r.omniCalScore)}</div><div class="key">OmniCal Score</div></div><div class="oc-score-tile"><div class="val ${sClass(r.cameraRmsError)}">${fmtScore(r.cameraRmsError)}</div><div class="key">Camera RMS</div></div><div class="oc-score-tile"><div class="val ${sClass(r.projectorRmsError)}">${fmtScore(r.projectorRmsError)}</div><div class="key">Projector RMS</div></div>`;
+  ['ocScoreGrid','mOcScoreGrid'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=grid;});
+  const stType=sc==='green'?'ok':sc==='yellow'?'warn':'err';
+  ocSetStatus(['ocS3feedback','mOcS3'],data.status?.message||'',stType);
+  ['ocDeclineConfirm','mOcDeclineConfirm'].forEach(id=>{document.getElementById(id)?.classList.remove('visible');});
+  ['ocResultBtns','mOcResultBtns'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});
+  ocShowStep(3);
+}
+function ocShowDeclineConfirm(){['ocDeclineConfirm','mOcDeclineConfirm'].forEach(id=>{document.getElementById(id)?.classList.add('visible');});['ocResultBtns','mOcResultBtns'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
+function ocCancelDecline(){['ocDeclineConfirm','mOcDeclineConfirm'].forEach(id=>{document.getElementById(id)?.classList.remove('visible');});['ocResultBtns','mOcResultBtns'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});}
+async function ocConfirmDecline(){
+  try{
+    await ocApiCall('/api/session/omnical/rigcheck/revertresult',{});
+    ['ocDoneTitle','mOcDoneTitle'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Calibration Declined';});
+    ['ocDoneDesc','mOcDoneDesc'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Calibration reverted. Previous fallback restored.';});
+    ['ocFallbackBox','mOcFallbackBox'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ocSetStatus(['ocS4status','mOcS4'],'↩ Calibration reverted.','warn');
+    ['ocDoneBtnRow','mOcDoneBtnRow'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=`<button class="oc-btn oc-btn-primary" onclick="ocRecapture()">↺ Recapture</button><button class="oc-btn oc-btn-ghost" onclick="ocRestart()">✕ Exit</button>`;});
+    ocShowStep(4);
+  }catch(e){ocSetStatus(['ocS3feedback','mOcS3'],'✕ Revert failed: '+e.message,'err');ocCancelDecline();}
+}
+async function ocAcceptCalibration(){
+  try{
+    await ocApiCall('/api/session/omnical/rigcheck/acceptresult',{});
+    const ts=new Date().toLocaleString();
+    const sc=ocLastResult?`Score: ${ocLastResult.omniCalScore===10000?'N/A':parseFloat(ocLastResult.omniCalScore).toFixed(4)}`:'';
+    ['ocDoneTitle','mOcDoneTitle'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Calibration Accepted ✓';});
+    ['ocDoneDesc','mOcDoneDesc'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Accepted and saved as the new fallback.';});
+    ['ocFallbackBox','mOcFallbackBox'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});
+    ['ocFallbackVal','mOcFallbackVal'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=`OmniCal Fallback — ${ts}${sc?' | '+sc:''}`;});
+    ocSetStatus(['ocS4status','mOcS4'],'✓ Fallback saved successfully.','ok');
+    ['ocDoneBtnRow','mOcDoneBtnRow'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=`<button class="oc-btn oc-btn-primary" onclick="ocRestart()">↺ New Calibration</button>`;});
+    ocShowStep(4);
+  }catch(e){ocSetStatus(['ocS3feedback','mOcS3'],'✕ Accept failed: '+e.message,'err');}
+}
+async function ocRecapture(){
+  ['ocProgressWrap','mOcProgressWrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ocSetProgress(0,'');
+  ['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=true;el.innerHTML='<span class="spin"></span> Restarting…';}});
+  ocSetStatus(['ocS2status','mOcS2'],'<span class="spin"></span> Restarting camera discovery…','warn');
+  ocShowStep(2);
+  try{
+    const data=await ocApiCall('/api/session/omnical/cameradiscovery',{enabled:true});
+    if(data.status&&data.status.code===0) ocSetStatus(['ocS2status','mOcS2'],'✓ Camera discovery restarted.','ok');
+    else throw new Error(data.status?.message||'Unknown error');
+  }catch(e){ocSetStatus(['ocS2status','mOcS2'],'✕ Failed: '+e.message,'err');}
+  ['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=false;el.innerHTML='⬡ Capture';}});
+}
+function ocRestart(){
+  clearInterval(ocPollInterval);ocPollCount=0;ocLastResult=null;
+  ['ocProgressWrap','mOcProgressWrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ocSetProgress(0,'');
+  ['ocBtnCapture','mOcBtnCapture'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=false;el.innerHTML='⬡ Capture';}});
+  ocSetStatus(['ocS1status','mOcS1'],'Enter your server details above.');
+  ocShowStep(1);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  dCanvas=document.getElementById('viz');
+  mCanvas=document.getElementById('viz-m');
+  dCtx=dCanvas.getContext('2d');
+  mCtx=mCanvas.getContext('2d');
+
+  const ro=new ResizeObserver(()=>{recalcLayout(dCanvas,dCtx);recalcLayout(mCanvas,mCtx);drawCanvas();});
+  ro.observe(document.getElementById('d-canvasWrap'));
+  ro.observe(document.querySelector('.m-canvas-wrap'));
+  bindCanvas(dCanvas);bindCanvas(mCanvas);
+
+  document.getElementById('d-dUp').addEventListener('click',()=>nudge('y',-1));
+  document.getElementById('d-dDown').addEventListener('click',()=>nudge('y',1));
+  document.getElementById('d-dLeft').addEventListener('click',()=>nudge('x',-1));
+  document.getElementById('d-dRight').addEventListener('click',()=>nudge('x',1));
+  document.querySelectorAll('#d-stepBtns .step-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#d-stepBtns .step-btn').forEach(b=>b.classList.remove('active-step'));btn.classList.add('active-step');nudgeStep=parseInt(btn.dataset.step);}));
+  document.getElementById('d-applyBtn').addEventListener('click',()=>{if(!selectedRp)return;const{x,y}=getXY('d');applyModification(x,y);});
+  document.getElementById('d-enableBtn').addEventListener('click',()=>setLineupMode(true));
+  document.getElementById('d-disableBtn').addEventListener('click',()=>setLineupMode(false));
+
+  document.getElementById('m-dUp').addEventListener('click',()=>nudge('y',-1));
+  document.getElementById('m-dDown').addEventListener('click',()=>nudge('y',1));
+  document.getElementById('m-dLeft').addEventListener('click',()=>nudge('x',-1));
+  document.getElementById('m-dRight').addEventListener('click',()=>nudge('x',1));
+  document.querySelectorAll('#m-stepBtns .step-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#m-stepBtns .step-btn').forEach(b=>b.classList.remove('active-step'));btn.classList.add('active-step');nudgeStep=parseInt(btn.dataset.step);}));
+  document.getElementById('m-applyBtn').addEventListener('click',()=>{if(!selectedRp)return;const{x,y}=getXY('m');applyModification(x,y);});
+  document.getElementById('m-enableBtn').addEventListener('click',()=>setLineupMode(true));
+  document.getElementById('m-disableBtn').addEventListener('click',()=>setLineupMode(false));
+
+  const q=new URLSearchParams(window.location.search);
+  const dir=q.get('director')||'',port=q.get('httpport')||'';
+  if(dir.includes(':')){const p=dir.split(':');directorHostname=p[0];directorHttpPort=p[1];}else{directorHostname=dir;directorHttpPort=port;}
+  if(directorHostname)document.getElementById('directorIp').value=directorHostname;
+  if(directorHttpPort)document.getElementById('directorPort').value=directorHttpPort;
+
+  ocRenderDots(1);
+  log('disguise Cal Tools initialised');
+  if(!Disguise?.Workspace?.post)log('Disguise Workspace API not detected','WARN');
+  else log('Disguise Workspace API detected');
+  drawCanvas();
+  openConn();
+});
+</script>
+</body>
+</html>
